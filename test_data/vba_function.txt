@@ -1,0 +1,68 @@
+Sub transpose_cells()
+
+    ' Define the workbook
+    Dim wb As Workbook
+    Set wb = ThisWorkbook
+
+    ' Define the source worksheet
+    Dim ws_source As Worksheet
+    Set ws_source = wb.Sheets("Source")  ' Replace "Source" with your source sheet name
+
+    ' Create a new sheet for the transposed data
+    Dim ws_dest As Worksheet
+    Set ws_dest = wb.Sheets.Add(After:=ws_source)
+    ws_dest.Name = "TransposedData"  ' Give it a name
+
+    ' Define the last row in source sheet
+    Dim lastRow As Long
+    lastRow = ws_source.Cells(ws_source.Rows.Count, "A").End(xlUp).row
+
+    ' Define the source and destination ranges
+    Dim sourceRange As Range
+    Dim destRange As Range
+
+    ' Place the ID and name in the destination sheet for the month
+    ws_dest.Cells(1, 1).Value = "month"  ' ID
+    ws_dest.Cells(2, 1).Value = "Month"  ' Name
+
+    ' Place the dates in the destination sheet
+    Dim startDate As Date
+    startDate = ws_source.Cells(1, 1).Value  ' Assuming the date is in cell A1 of the source sheet
+    Dim j As Long
+    For j = 1 To 60  ' Assuming there are 60 months
+        ws_dest.Cells(j + 2, 1).Value = DateAdd("m", j - 1, startDate)
+    Next j
+
+    ' Loop over each row in the source table
+    Dim i As Long
+    For i = 3 To lastRow  ' Start from row 2
+
+        ' Define the source sheet and cell based on the table values
+        Dim sourceSheet As String
+        Dim sourceCell As String
+        Dim formula As String
+        formula = ws_source.Cells(i, 4).formula
+        
+        ' Remove any single quotes from the formula
+        formula = Replace(formula, "'", "")
+        
+        ' Extract the Sheet and Cell references
+        sourceSheet = Mid(formula, 2, InStr(2, formula, "!") - 2)  ' Extract sheet name from the formula
+        sourceCell = Mid(formula, InStr(formula, "!") + 1)  ' Extract cell reference from the formula
+
+        ' Place the ID and name in the destination sheet
+        ws_dest.Cells(1, i - 1).Value = ws_source.Cells(i, 1).Value  ' ID
+        ws_dest.Cells(2, i - 1).Value = ws_source.Cells(i, 2).Value  ' Name
+
+        ' Set the destination range
+        Set destRange = ws_dest.Cells(3, i - 1)
+
+        ' Loop through each cell in the destination range and set it to the cell reference in the source sheet
+        Dim k As Long
+        For k = 0 To 59  ' Assuming there are 60 cells to transpose
+            destRange.Offset(k, 0).formula = "=" & "'" & sourceSheet & "'!" & ws_source.Range(sourceCell).Offset(0, k).Address
+        Next k
+
+    Next i
+
+End Sub
