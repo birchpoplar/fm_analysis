@@ -7,11 +7,27 @@ Sub transpose_cells()
     ' Define the source worksheet
     Dim ws_source As Worksheet
     Set ws_source = wb.Sheets("Source")  ' Replace "Source" with your source sheet name
-
-    ' Create a new sheet for the transposed data
+    
+    ' Create the new sheet object
     Dim ws_dest As Worksheet
+
+    ' Delete the sheet if it exists
+    On Error Resume Next
+    Set ws_dest = wb.Sheets("TransposedData")
+    If Not ws_dest Is Nothing Then
+        Application.DisplayAlerts = False
+        ws_dest.Delete
+        Application.DisplayAlerts = True
+    End If
+    On Error GoTo 0
+
+    ' Now add the new sheet for the transposed data
     Set ws_dest = wb.Sheets.Add(After:=ws_source)
     ws_dest.Name = "TransposedData"  ' Give it a name
+
+    ' Turn off screen updating and automatic calculations
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
 
     ' Define the last row in source sheet
     Dim lastRow As Long
@@ -64,5 +80,43 @@ Sub transpose_cells()
         Next k
 
     Next i
+    
+    SaveToCSV ws_dest ' Call the function passing ws_dest as parameter
+    
+    ' Delete the TransposedData sheet after saving
+    If Not ws_dest Is Nothing And ws_dest.Name = "TransposedData" Then
+        wb.Sheets(1).Activate
+        Application.DisplayAlerts = False
+        ws_dest.Delete
+        Application.DisplayAlerts = True
+    End If
+
+    ' Turn back on the screen updating and automatic calculations
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    
+End Sub
+
+Sub SaveToCSV(ws As Worksheet)
+
+    ' Define workbook
+    Dim wb As Workbook
+    Set wb = ThisWorkbook
+
+    ' Prompt for File Suffix
+    Dim FileSuffix As String
+    FileSuffix = InputBox("Enter File Suffix")
+
+    ' Define filename
+    Dim filename As String
+    filename = wb.Path & "\" & Replace(Left(wb.Name, Len(wb.Name) - Len(Split(wb.Name, ".")(UBound(Split(wb.Name, ".")))) - 1), FileSuffix, "") & "_" & FileSuffix & ".csv"
+
+    ' Save the worksheet as CSV in the same directory as the workbook
+    ws.Copy
+    ActiveWorkbook.SaveAs filename, xlCSV
+    ActiveWorkbook.Close False
+
+    ' Alert the user
+    MsgBox "File has been saved as " & filename
 
 End Sub
