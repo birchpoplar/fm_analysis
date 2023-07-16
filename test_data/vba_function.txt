@@ -31,7 +31,7 @@ Sub transpose_cells()
 
     ' Define the last row in source sheet
     Dim lastRow As Long
-    lastRow = ws_source.Cells(ws_source.Rows.Count, "A").End(xlUp).row
+    lastRow = ws_source.Cells(ws_source.Rows.Count, "A").End(xlUp).Row
 
     ' Define the source and destination ranges
     Dim sourceRange As Range
@@ -62,6 +62,17 @@ Sub transpose_cells()
         ' Remove any single quotes from the formula
         formula = Replace(formula, "'", "")
         
+        ' Check if the formula starts with a "="
+        If Left(formula, 1) <> "=" Then
+            ' If it doesn't, it's not a cell reference, so skip this row
+            GoTo NextRow
+        End If
+        
+        ' Remove the "+" if it exists
+        If Left(formula, 2) = "=+" Then
+            formula = "=" & Right(formula, Len(formula) - 2)
+        End If
+        
         ' Extract the Sheet and Cell references
         sourceSheet = Mid(formula, 2, InStr(2, formula, "!") - 2)  ' Extract sheet name from the formula
         sourceCell = Mid(formula, InStr(formula, "!") + 1)  ' Extract cell reference from the formula
@@ -79,6 +90,7 @@ Sub transpose_cells()
             destRange.Offset(k, 0).formula = "=" & "'" & sourceSheet & "'!" & ws_source.Range(sourceCell).Offset(0, k).Address
         Next k
 
+NextRow:
     Next i
     
     SaveToCSV ws_dest ' Call the function passing ws_dest as parameter
